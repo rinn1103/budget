@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>預算導航</title>
+    <title>預算導航 雲端版</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="預算導航">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/10384/10384160.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,8 +16,8 @@
             color: #f8fafc;
             font-family: -apple-system, 'PingFang TC', sans-serif;
             min-height: 100vh;
-            /* 防止內容被手機底部橫條擋住 */
-            padding-bottom: env(safe-area-inset-bottom);
+            /* 針對手機 Safari 底部工具欄優化 */
+            padding-bottom: 100px; 
         }
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
@@ -30,8 +29,8 @@
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             appearance: none;
+            font-size: 16px; /* 防止 iOS 自動放大 */
         }
-        /* 隱藏輸入框數字箭頭 */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
@@ -39,33 +38,37 @@
         .btn-gradient {
             background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
         }
-        .select-none { user-select: none; -webkit-user-select: none; }
+        .sync-status { font-size: 11px; font-weight: bold; margin-top: 8px; transition: all 0.3s; }
+        .list-item { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="p-6 select-none">
+<body class="p-5">
 
     <div class="max-w-md mx-auto">
-        <header class="text-center mb-6 pt-4">
+        <header class="text-center mb-6 pt-2">
             <h1 class="text-xl font-black tracking-[0.2em] text-white opacity-80">BUDGET NAVI</h1>
+            <div id="sync-status" class="sync-status text-slate-500">雲端狀態：就緒</div>
         </header>
 
-        <div class="glass-card rounded-[2.5rem] p-8 mb-6 text-center shadow-2xl">
+        <div class="glass-card rounded-[2.5rem] p-8 mb-6 text-center shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-10 -left-10 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl"></div>
             <p class="text-slate-400 text-xs font-bold mb-2 tracking-widest uppercase">今日建議花費</p>
             <div class="text-6xl font-bold mb-4 tracking-tighter text-white" id="daily-limit">$0</div>
             
             <div class="flex justify-center items-center gap-2 bg-white/10 py-2 px-5 rounded-full w-fit mx-auto border border-white/5">
                 <span class="text-xs text-slate-300">平分給未來</span>
-                <input type="number" id="custom-days" class="w-10 bg-transparent text-center text-sky-400 font-bold text-lg border-b-2 border-sky-500 focus:outline-none" oninput="updateCalculations()">
+                <input type="number" id="custom-days" inputmode="numeric" class="w-10 bg-transparent text-center text-sky-400 font-bold text-lg border-b-2 border-sky-500 focus:outline-none" oninput="updateCalculations()">
                 <span class="text-xs text-slate-300">天</span>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="glass-card rounded-3xl p-5 border-l-4 border-emerald-500/50">
-                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase">剩餘總額</p>
+            <div class="glass-card rounded-3xl p-5 border-l-4 border-emerald-500/50 shadow-lg">
+                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase">剩餘可用額度</p>
                 <p class="text-xl font-bold text-emerald-400" id="total-remaining">$0</p>
             </div>
-            <div class="glass-card rounded-3xl p-5 border-l-4 border-rose-500/50">
+            <div class="glass-card rounded-3xl p-5 border-l-4 border-rose-500/50 shadow-lg">
                 <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase">本月累計支出</p>
                 <p class="text-xl font-bold text-rose-400" id="total-spent">$0</p>
             </div>
@@ -75,33 +78,38 @@
             <div class="glass-card rounded-3xl p-6">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[10px] text-slate-500 font-bold ml-1 mb-1 block">本月生活費</label>
-                        <input type="number" id="income" class="input-style w-full rounded-2xl p-3 text-white font-semibold" placeholder="0" oninput="updateCalculations()">
+                        <label class="text-[10px] text-slate-500 font-bold ml-1 mb-1 block uppercase">月生活費</label>
+                        <input type="number" id="income" inputmode="decimal" class="input-style w-full rounded-2xl p-3 text-white font-bold" placeholder="0" oninput="updateCalculations()">
                     </div>
                     <div>
-                        <label class="text-[10px] text-slate-500 font-bold ml-1 mb-1 block">目標儲蓄</label>
-                        <input type="number" id="savings" class="input-style w-full rounded-2xl p-3 text-white font-semibold" placeholder="0" oninput="updateCalculations()">
+                        <label class="text-[10px] text-slate-500 font-bold ml-1 mb-1 block uppercase">目標儲蓄</label>
+                        <input type="number" id="savings" inputmode="decimal" class="input-style w-full rounded-2xl p-3 text-white font-bold" placeholder="0" oninput="updateCalculations()">
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card rounded-3xl p-6">
-                <h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest uppercase">新增支出項目</h3>
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="expense-note" class="flex-1 input-style rounded-2xl p-3 text-sm text-white" placeholder="項目內容">
-                    <input type="number" id="expense-amount" class="w-24 input-style rounded-2xl p-3 text-sm text-white font-bold" placeholder="金額">
-                    <button onclick="addExpense()" class="btn-gradient px-5 rounded-2xl font-bold shadow-lg active:scale-90 transition-transform text-white">＋</button>
+            <div class="glass-card rounded-3xl p-6 shadow-xl">
+                <h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest uppercase text-center italic">Quick Record</h3>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="expense-note" class="flex-1 input-style rounded-2xl p-4 text-sm text-white" placeholder="項目（如：晚餐）">
+                    <input type="number" id="expense-amount" inputmode="decimal" class="w-28 input-style rounded-2xl p-4 text-sm text-white font-bold" placeholder="金額">
                 </div>
+                <button onclick="addExpense()" class="btn-gradient w-full py-4 mt-2 rounded-2xl font-black shadow-lg active:scale-95 transition-all text-white tracking-widest">
+                    新增支出 🚀
+                </button>
                 
-                <div id="expense-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <div id="expense-list" class="space-y-3 max-h-60 overflow-y-auto pr-1 mt-6">
                     </div>
             </div>
         </div>
 
-        <button onclick="resetAll()" class="w-full py-8 text-slate-600 text-[10px] tracking-widest hover:text-rose-400 transition-colors uppercase">Reset All Data</button>
+        <button onclick="resetAll()" class="w-full py-10 text-slate-600 text-[10px] tracking-widest hover:text-rose-400 transition-colors uppercase font-bold">Clear All Data</button>
     </div>
 
     <script>
+        // 【重要】請務必將此處換成你的 Apps Script 網址
+        const WEB_APP_URL = "在此貼上你的Apps_Script網址";
+
         let expenses = JSON.parse(localStorage.getItem('myExpenses')) || [];
 
         function getInitialDays() {
@@ -127,22 +135,46 @@
             saveData();
         }
 
-        function addExpense() {
+        async function addExpense() {
             const noteInput = document.getElementById('expense-note');
             const amountInput = document.getElementById('expense-amount');
             const amount = parseFloat(amountInput.value) || 0;
+            const note = noteInput.value || "一般支出";
+            const statusEl = document.getElementById('sync-status');
 
             if (amount > 0) {
-                expenses.unshift({ note: noteInput.value || "一般支出", amount, id: Date.now() });
+                expenses.unshift({ note, amount, id: Date.now() });
                 noteInput.value = '';
                 amountInput.value = '';
                 updateCalculations();
+
+                statusEl.innerText = "☁️ 正在同步至雲端...";
+                statusEl.className = "sync-status text-sky-400";
+
+                try {
+                    await fetch(WEB_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors", 
+                        body: JSON.stringify({ note: note, amount: amount, type: "支出" })
+                    });
+                    statusEl.innerText = "✅ 已同步至 Google Sheets";
+                    statusEl.className = "sync-status text-emerald-400";
+                    setTimeout(() => {
+                        statusEl.innerText = "雲端狀態：就緒";
+                        statusEl.className = "sync-status text-slate-500";
+                    }, 3000);
+                } catch (e) {
+                    statusEl.innerText = "❌ 同步失敗";
+                    statusEl.className = "sync-status text-rose-400";
+                }
             }
         }
 
         function deleteExpense(id) {
-            expenses = expenses.filter(item => item.id !== id);
-            updateCalculations();
+            if(confirm("確定要刪除這筆紀錄嗎？（這不會刪除雲端已存的資料）")) {
+                expenses = expenses.filter(item => item.id !== id);
+                updateCalculations();
+            }
         }
 
         function renderExpenses() {
@@ -150,12 +182,15 @@
             list.innerHTML = '';
             expenses.forEach(item => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5";
+                div.className = "list-item flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5 shadow-sm";
                 div.innerHTML = `
-                    <span class="text-sm text-slate-400">${item.note}</span>
+                    <div class="flex flex-col">
+                        <span class="text-xs text-slate-500 font-bold uppercase mb-1">Item</span>
+                        <span class="text-sm text-slate-300 font-medium">${item.note}</span>
+                    </div>
                     <div class="flex items-center gap-4">
-                        <span class="text-sm font-bold text-white">$${item.amount.toLocaleString()}</span>
-                        <button onclick="deleteExpense(${item.id})" class="text-rose-500/50 p-1 text-lg">×</button>
+                        <span class="text-lg font-black text-white">$${item.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense(${item.id})" class="text-rose-500/40 hover:text-rose-500 p-2 text-xl">✕</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -170,7 +205,7 @@
         }
 
         function resetAll() {
-            if(confirm("確定要重置嗎？")) {
+            if(confirm("確定要重置嗎？手機內的暫存紀錄將被清空。")) {
                 localStorage.clear();
                 location.reload();
             }

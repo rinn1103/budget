@@ -1,112 +1,109 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/10384/10384160.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>預算導航</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人預算導航</title>
+    <meta name="apple-mobile-web-app-title" content="預算導航">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/10384/10384160.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             background: radial-gradient(circle at top left, #1e293b, #0f172a);
             color: #f8fafc;
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            font-family: -apple-system, 'PingFang TC', sans-serif;
             min-height: 100vh;
+            /* 防止內容被手機底部橫條擋住 */
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
         .input-style {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            appearance: none;
         }
-        .input-style:focus {
-            border-color: #38bdf8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-            outline: none;
+        /* 隱藏輸入框數字箭頭 */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         .btn-gradient {
             background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
         }
+        .select-none { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-6 select-none">
 
     <div class="max-w-md mx-auto">
-        <header class="text-center mb-8">
-            <h1 class="text-2xl font-black tracking-widest text-white uppercase">Budget Navigator</h1>
-            <div class="h-1 w-12 bg-sky-500 mx-auto mt-2 rounded-full"></div>
+        <header class="text-center mb-6 pt-4">
+            <h1 class="text-xl font-black tracking-[0.2em] text-white opacity-80">BUDGET NAVI</h1>
         </header>
 
-        <div class="glass-card rounded-[2rem] p-8 mb-8 text-center relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-sky-500/10 rounded-full blur-3xl"></div>
-            <p class="text-slate-400 text-sm font-medium mb-2 uppercase tracking-tighter">今日建議花費</p>
-            <div class="text-6xl font-bold mb-4 tracking-tight" id="daily-limit">$0</div>
+        <div class="glass-card rounded-[2.5rem] p-8 mb-6 text-center shadow-2xl">
+            <p class="text-slate-400 text-xs font-bold mb-2 tracking-widest uppercase">今日建議花費</p>
+            <div class="text-6xl font-bold mb-4 tracking-tighter text-white" id="daily-limit">$0</div>
             
-            <div class="flex justify-center items-center gap-2 bg-white/5 py-2 px-4 rounded-full w-fit mx-auto">
-                <span class="text-xs text-slate-300">預算平分給下</span>
-                <input type="number" id="custom-days" class="w-12 bg-transparent text-center text-sky-400 font-bold border-b border-sky-500" oninput="updateCalculations()">
+            <div class="flex justify-center items-center gap-2 bg-white/10 py-2 px-5 rounded-full w-fit mx-auto border border-white/5">
+                <span class="text-xs text-slate-300">平分給未來</span>
+                <input type="number" id="custom-days" class="w-10 bg-transparent text-center text-sky-400 font-bold text-lg border-b-2 border-sky-500 focus:outline-none" oninput="updateCalculations()">
                 <span class="text-xs text-slate-300">天</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="glass-card rounded-2xl p-4 border-l-4 border-emerald-500">
-                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">剩餘可用額度</p>
-                <p class="text-xl font-bold" id="total-remaining">$0</p>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="glass-card rounded-3xl p-5 border-l-4 border-emerald-500/50">
+                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase">剩餘總額</p>
+                <p class="text-xl font-bold text-emerald-400" id="total-remaining">$0</p>
             </div>
-            <div class="glass-card rounded-2xl p-4 border-l-4 border-rose-500">
-                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">已記錄總支出</p>
-                <p class="text-xl font-bold" id="total-spent">$0</p>
+            <div class="glass-card rounded-3xl p-5 border-l-4 border-rose-500/50">
+                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase">本月累計支出</p>
+                <p class="text-xl font-bold text-rose-400" id="total-spent">$0</p>
             </div>
         </div>
 
-        <div class="space-y-6">
-            <div class="glass-card rounded-2xl p-6">
-                <h3 class="text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
-                    <span class="w-1 h-4 bg-sky-500 rounded-full"></span> 預算規劃
-                </h3>
+        <div class="space-y-4">
+            <div class="glass-card rounded-3xl p-6">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[10px] text-slate-500 block ml-1 mb-1">本月生活費</label>
-                        <input type="number" id="income" class="input-style w-full rounded-xl p-3 text-white" placeholder="0" oninput="updateCalculations()">
+                        <label class="text-[10px] text-slate-500 font-bold ml-1 mb-1 block">本月生活費</label>
+                        <input type="number" id="income" class="input-style w-full rounded-2xl p-3 text-white font-semibold" placeholder="0" oninput="updateCalculations()">
                     </div>
                     <div>
-                        <label class="text-[10px] text-slate-500 block ml-1 mb-1">目標儲蓄</label>
-                        <input type="number" id="savings" class="input-style w-full rounded-xl p-3 text-white" placeholder="0" oninput="updateCalculations()">
+                        <label class="text-[10px] text-slate-500 font-bold ml-1 mb-1 block">目標儲蓄</label>
+                        <input type="number" id="savings" class="input-style w-full rounded-2xl p-3 text-white font-semibold" placeholder="0" oninput="updateCalculations()">
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card rounded-2xl p-6">
-                <h3 class="text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
-                    <span class="w-1 h-4 bg-rose-500 rounded-full"></span> 快速扣款
-                </h3>
+            <div class="glass-card rounded-3xl p-6">
+                <h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest uppercase">新增支出項目</h3>
                 <div class="flex gap-2 mb-4">
-                    <input type="text" id="expense-note" class="flex-1 input-style rounded-xl p-3 text-sm" placeholder="項目 (車票、電費...)">
-                    <input type="number" id="expense-amount" class="w-24 input-style rounded-xl p-3 text-sm" placeholder="金額">
-                    <button onclick="addExpense()" class="btn-gradient px-4 rounded-xl font-bold shadow-lg shadow-sky-500/20 active:scale-95 transition-transform">＋</button>
+                    <input type="text" id="expense-note" class="flex-1 input-style rounded-2xl p-3 text-sm text-white" placeholder="項目內容">
+                    <input type="number" id="expense-amount" class="w-24 input-style rounded-2xl p-3 text-sm text-white font-bold" placeholder="金額">
+                    <button onclick="addExpense()" class="btn-gradient px-5 rounded-2xl font-bold shadow-lg active:scale-90 transition-transform text-white">＋</button>
                 </div>
                 
-                <div id="expense-list" class="space-y-2 max-h-52 overflow-y-auto pr-2">
+                <div id="expense-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
                     </div>
             </div>
         </div>
 
-        <button onclick="resetAll()" class="w-full mt-8 text-slate-500 text-xs hover:text-rose-400 transition-colors">清除本月所有資料</button>
+        <button onclick="resetAll()" class="w-full py-8 text-slate-600 text-[10px] tracking-widest hover:text-rose-400 transition-colors uppercase">Reset All Data</button>
     </div>
 
     <script>
         let expenses = JSON.parse(localStorage.getItem('myExpenses')) || [];
 
-        // 初始化剩餘天數
         function getInitialDays() {
             const now = new Date();
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -122,7 +119,6 @@
             const availableTotal = income - savings - totalSpent;
             const dailyLimit = availableTotal / customDays;
 
-            // UI 更新
             document.getElementById('daily-limit').innerText = `$${Math.max(0, Math.floor(dailyLimit)).toLocaleString()}`;
             document.getElementById('total-remaining').innerText = `$${Math.max(0, availableTotal).toLocaleString()}`;
             document.getElementById('total-spent').innerText = `$${totalSpent.toLocaleString()}`;
@@ -154,12 +150,12 @@
             list.innerHTML = '';
             expenses.forEach(item => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 animate-fade-in";
+                div.className = "flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5";
                 div.innerHTML = `
-                    <span class="text-sm text-slate-300 font-medium">${item.note}</span>
+                    <span class="text-sm text-slate-400">${item.note}</span>
                     <div class="flex items-center gap-4">
-                        <span class="text-sm font-bold text-white">$${item.amount}</span>
-                        <button onclick="deleteExpense(${item.id})" class="text-rose-400/50 hover:text-rose-400 text-xs">✕</button>
+                        <span class="text-sm font-bold text-white">$${item.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense(${item.id})" class="text-rose-500/50 p-1 text-lg">×</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -174,7 +170,7 @@
         }
 
         function resetAll() {
-            if(confirm("確定要重置所有預算資料嗎？")) {
+            if(confirm("確定要重置嗎？")) {
                 localStorage.clear();
                 location.reload();
             }
